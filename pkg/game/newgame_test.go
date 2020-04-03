@@ -9,18 +9,18 @@ import (
 // TODO should this use a mock, to avoid testing individual game initialization here?
 func TestNewGame(t *testing.T) {
 	cases := []struct {
-		name      string
+		name          string
 		gameDirectory string
-		expectErr bool
+		expectErr     bool
 	}{
 		{
-			name: "minecraft",
+			name:          "minecraft",
 			gameDirectory: "../../test/minecraft",
 		},
 		{
-			name:      "unavailable",
+			name:          "unavailable",
 			gameDirectory: "../../test/minecraft",
-			expectErr: true,
+			expectErr:     true,
 		},
 	}
 

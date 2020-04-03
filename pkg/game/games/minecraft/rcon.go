@@ -1,6 +1,11 @@
 package minecraft
 
-import mcrcon "github.com/Kelwing/mc-rcon"
+import (
+	"errors"
+	mcrcon "github.com/Kelwing/mc-rcon"
+)
+
+// Please give these things better names.
 
 type rconCreatorIface interface {
 	new() (rconClientIface, error)
@@ -15,12 +20,12 @@ type realRconConnection struct {
 	conn *mcrcon.MCConn
 }
 
-type realRcon struct {
-	port int
+type realRconCreator struct {
+	port     int
 	password string
 }
 
-func (r *realRcon) new() (rconClientIface, error) {
+func (r *realRconCreator) new() (rconClientIface, error) {
 	conn := new(mcrcon.MCConn)
 
 	err := conn.Open("", "")
@@ -45,3 +50,29 @@ func (r *realRconConnection) run(cmd string) (string, error) {
 func (r *realRconConnection) close() {
 	r.conn.Close()
 }
+
+type fakeRconCreator struct {
+	// commands is a map of input commands to stdout results.
+	commands map[string]string
+}
+
+func (r *fakeRconCreator) new() (rconClientIface, error) {
+	return &fakeRconConnection{
+		commands: r.commands,
+	}, nil
+}
+
+type fakeRconConnection struct {
+	commands map[string]string
+}
+
+func (r *fakeRconConnection) run(cmd string) (string, error) {
+	output, found := r.commands[cmd]
+	if found {
+		return output, nil
+	} else {
+		return "", errors.New("unimplimented")
+	}
+}
+
+func (r *fakeRconConnection) close() {}

@@ -56,15 +56,20 @@ func NewGame(baseConfig gameinterface.Config) (gameinterface.GenericGame, error)
 	// Build the config object.
 	config := Config{
 		base: baseConfig,
-		rconConstructor: &realRcon{ // Default to using real RCON.
+		rconConstructor: &realRconCreator{ // Default to using real RCON.
 			password: rconPassword,
-			port: rconPort,
+			port:     rconPort,
 		},
 	}
 
+	game := buildGame(config)
+	return game, nil
+}
+
+func buildGame(config Config) *Game {
 	return &Game{
 		config: config,
-	}, nil
+	}
 }
 
 func (g *Game) ListPlayers() ([]string, error) {
@@ -82,6 +87,10 @@ func (g *Game) ListPlayers() ([]string, error) {
 	// TODO handle format errors.
 	players := make([]string, 0)
 	playersString := strings.Split(resp, "players online:")[1]
+	if len(playersString) == 0 {
+		return players, nil
+	}
+
 	for _, player := range strings.Split(playersString, ",") {
 		players = append(players, player)
 	}

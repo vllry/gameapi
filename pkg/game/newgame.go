@@ -12,7 +12,7 @@ import (
 // It returns an error if the game name is not supported.
 func NewGame(gameName string, instanceName string, gameDirectory string) (gameinterface.GenericGame, error) {
 	config := gameinterface.Config{
-		InstanceName: instanceName,
+		InstanceName:  instanceName,
 		GameDirectory: gameDirectory,
 	}
 
