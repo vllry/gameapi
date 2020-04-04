@@ -1,9 +1,10 @@
 package webserver
 
 import (
-	"github.com/vllry/gameapi/pkg/game/games/minecraft"
 	"reflect"
 	"testing"
+
+	"github.com/vllry/gameapi/pkg/game/games/minecraft"
 )
 
 func TestGameWrapper_Functions(t *testing.T) {

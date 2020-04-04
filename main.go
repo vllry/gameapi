@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/pkg/errors"
+
 	"github.com/vllry/gameapi/pkg/webserver"
 
 	"github.com/vllry/gameapi/pkg/game"

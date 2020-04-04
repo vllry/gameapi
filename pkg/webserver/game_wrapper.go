@@ -2,8 +2,9 @@ package webserver
 
 import (
 	"encoding/json"
-	"github.com/vllry/gameapi/pkg/game/gameinterface"
 	"net/http"
+
+	"github.com/vllry/gameapi/pkg/game/gameinterface"
 )
 
 // GameWrapper provides HTTP API responses for game endpoints.
