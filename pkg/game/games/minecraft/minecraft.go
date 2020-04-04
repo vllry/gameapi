@@ -72,6 +72,23 @@ func buildGame(config Config) *Game {
 	}
 }
 
+// TODO (longterm) Backups should eventually be streamed to a central agent, rather than placed in an object store directly.
+// Only 1 copy of a game instance (distinct game + name pair) should be active at a time.
+// A rogue GameAPI instance should never be able to pollute the list of backups with a non-fresh backup.
+func (g *Game) Backup() error {
+	return nil
+}
+
+func (g *Game) GetLogs() (string, error) {
+	// TODO We're trusting here that the log is rotated reasonably...
+	// TODO Should older log files be spliced together?
+	bytes, err := ioutil.ReadFile(path.Join(g.config.base.GameDirectory, "logs/latest.log"))
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 func (g *Game) ListPlayers() ([]string, error) {
 	rc, err := g.config.rconConstructor.new()
 	if err != nil {
