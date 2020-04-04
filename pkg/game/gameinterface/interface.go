@@ -8,5 +8,6 @@ type Config struct {
 
 // GenericGame provides standard functions for an arbitrary game.
 type GenericGame interface {
+	GetLogs() (string, error)
 	ListPlayers() ([]string, error)
 }

@@ -2,6 +2,7 @@ package minecraft
 
 import (
 	"errors"
+
 	mcrcon "github.com/Kelwing/mc-rcon"
 )
 
