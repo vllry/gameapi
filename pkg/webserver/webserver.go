@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"github.com/vllry/gameapi/pkg/game"
 	"log"
 	"net/http"
 	"time"
@@ -16,7 +15,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func Start(g gameinterface.GenericGame) {
-	gameWrapper := game.NewGameWrapper(g)
+	gameWrapper := NewGameWrapper(g)
 
 	router := mux.NewRouter()
 
