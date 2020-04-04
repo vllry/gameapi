@@ -24,6 +24,10 @@ func TestNewGame(t *testing.T) {
 // newTestGame returns a Game object for testing purposes.
 func newTestGame(rconCommands map[string]string) *Game {
 	config := Config{
+		base: gameinterface.Config{
+			InstanceName:  "default",
+			GameDirectory: "../../../../test/minecraft",
+		},
 		rconConstructor: &fakeRconCreator{
 			commands: rconCommands,
 		},
@@ -61,4 +65,15 @@ func TestGame_ListPlayers(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, c.expectPlayers, players)
 	}
+}
+
+func TestGame_GetLogs(t *testing.T) {
+	expectLogs := `This is log line 1
+This thing ain't on autopilot.
+End.`
+
+	g := newTestGame(map[string]string{})
+	logs, err := g.GetLogs()
+	assert.NoError(t, err)
+	assert.Equal(t, expectLogs, logs)
 }
