@@ -72,6 +72,16 @@ func buildGame(config Config) *Game {
 	}
 }
 
+func (g *Game) GetLogs() (string, error) {
+	// TODO We're trusting here that the log is rotated reasonably...
+	// TODO Should older log files be spliced together?
+	bytes, err := ioutil.ReadFile(path.Join(g.config.base.GameDirectory, "logs/latest.log"))
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
 func (g *Game) ListPlayers() ([]string, error) {
 	rc, err := g.config.rconConstructor.new()
 	if err != nil {
