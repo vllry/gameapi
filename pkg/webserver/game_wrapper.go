@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"github.com/vllry/gameapi/pkg/game/gameinterface"
@@ -21,10 +22,12 @@ func NewGameWrapper(g gameinterface.GenericGame) GameWrapper {
 func (g *GameWrapper) Backup(w http.ResponseWriter, r *http.Request) {
 	err := g.game.Backup()
 	if err != nil {
+		log.Println("Backup failed: ", err)
 		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+	} else {
+		w.Write([]byte("done"))
 	}
-
-	w.Write([]byte("done"))
 }
 
 func (g *GameWrapper) GetLogs(w http.ResponseWriter, r *http.Request) {

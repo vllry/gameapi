@@ -25,7 +25,7 @@ func TestNewGame(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		game, err := NewGame(c.name, "default", c.gameDirectory)
+		game, err := NewGame(c.name, "default", c.gameDirectory, nil)
 		if c.expectErr {
 			assert.Error(t, err)
 		} else {

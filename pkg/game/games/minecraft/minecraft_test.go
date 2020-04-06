@@ -3,6 +3,8 @@ package minecraft
 import (
 	"testing"
 
+	"github.com/vllry/gameapi/pkg/game/identifier"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vllry/gameapi/pkg/game/gameinterface"
@@ -10,7 +12,10 @@ import (
 
 func TestNewGame(t *testing.T) {
 	baseConfig := gameinterface.Config{
-		InstanceName:  "default",
+		Identifier: identifier.GameIdentifier{
+			Game:     "minecraft",
+			Instance: "default",
+		},
 		GameDirectory: "../../../../test/minecraft",
 	}
 
@@ -25,7 +30,10 @@ func TestNewGame(t *testing.T) {
 func newTestGame(rconCommands map[string]string) *Game {
 	config := Config{
 		base: gameinterface.Config{
-			InstanceName:  "default",
+			Identifier: identifier.GameIdentifier{
+				Game:     "minecraft",
+				Instance: "default",
+			},
 			GameDirectory: "../../../../test/minecraft",
 		},
 		rconConstructor: &fakeRconCreator{

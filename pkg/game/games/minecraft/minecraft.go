@@ -1,7 +1,7 @@
 package minecraft
 
 import (
-	"errors"
+	"context"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,13 +9,18 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
+	"github.com/vllry/gameapi/pkg/backup"
 	"github.com/vllry/gameapi/pkg/game/gameinterface"
 )
 
+// Game is the state of the Minecraft server manager.
 type Game struct {
 	config Config
 }
 
+// Config is Minecraft-specific configuration.
 type Config struct {
 	base            gameinterface.Config
 	rconPort        int
@@ -72,11 +77,44 @@ func buildGame(config Config) *Game {
 	}
 }
 
-// TODO (longterm) Backups should eventually be streamed to a central agent, rather than placed in an object store directly.
+// Backup backs up the game.
 // Only 1 copy of a game instance (distinct game + name pair) should be active at a time.
-// A rogue GameAPI instance should never be able to pollute the list of backups with a non-fresh backup.
 func (g *Game) Backup() error {
-	return nil
+	rcon, err := g.config.rconConstructor.new()
+	if err != nil {
+		return errors.Wrap(err, "couldn't create rcon client")
+	}
+	defer rcon.close()
+	defer rcon.run("save-on") // Always re-enable autosaving on exit.
+
+	// Disable autosaving.
+	_, err = rcon.run("save-off")
+	if err != nil {
+		return errors.Wrap(err, "couldn't disable auosaving")
+	}
+
+	// Manually flush save to disk.
+	_, err = rcon.run("save")
+	if err != nil {
+		return errors.Wrap(err, "couldn't save game")
+	}
+	saveFlushTime := backup.NowUtc()
+
+	// Archive directory while saving is off.
+	contents, err := backup.ArchiveDirectory(g.config.base.GameDirectory)
+	if err != nil {
+		return errors.Wrap(err, "failed to archive game directory")
+	}
+
+	// Re-enable saving, we're done disk IO.
+	_, err = rcon.run("save-on")
+	if err != nil {
+		return errors.Wrap(err, "failed to re-enable saving") // TODO don't bail out here. May as well upload.
+	}
+
+	// Upload archive.
+	err = g.config.base.BackupManager.Upload(context.Background(), contents, saveFlushTime, g.config.base.Identifier)
+	return err
 }
 
 func (g *Game) GetLogs() (string, error) {
