@@ -51,7 +51,7 @@ func NewGame(baseConfig gameinterface.Config) (gameinterface.GenericGame, error)
 				return nil, err
 			}
 		} else if strings.HasPrefix(line, "rcon.password=") {
-			rconPassword = strings.TrimLeft(line, "rcon.password=")
+			rconPassword = strings.TrimPrefix(line, "rcon.password=")
 		}
 	}
 	if rconPort == 0 || len(rconPassword) == 0 {
@@ -101,18 +101,21 @@ func (g *Game) Backup() error {
 	saveFlushTime := backup.NowUtc()
 
 	// Archive directory while saving is off.
+	log.Println("Starting archive...")
 	contents, err := backup.ArchiveDirectory(g.config.base.GameDirectory)
 	if err != nil {
 		return errors.Wrap(err, "failed to archive game directory")
 	}
 
 	// Re-enable saving, we're done disk IO.
+	log.Println("Archiving done, re-enabling saving...")
 	_, err = rcon.run("save-on")
 	if err != nil {
 		return errors.Wrap(err, "failed to re-enable saving") // TODO don't bail out here. May as well upload.
 	}
 
 	// Upload archive.
+	log.Println("Uploading...")
 	err = g.config.base.BackupManager.Upload(context.Background(), contents, saveFlushTime, g.config.base.Identifier)
 	return err
 }

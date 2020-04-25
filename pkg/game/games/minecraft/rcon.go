@@ -2,6 +2,7 @@ package minecraft
 
 import (
 	"errors"
+	"fmt"
 
 	mcrcon "github.com/Kelwing/mc-rcon"
 )
@@ -29,7 +30,7 @@ type realRconCreator struct {
 func (r *realRconCreator) new() (rconClientIface, error) {
 	conn := new(mcrcon.MCConn)
 
-	err := conn.Open("", "")
+	err := conn.Open(fmt.Sprintf("localhost:%d", r.port), r.password)
 	if err != nil {
 		return nil, err
 	}
