@@ -3,6 +3,8 @@ package minecraft
 import (
 	"testing"
 
+	"github.com/vllry/gameapi/pkg/backup"
+
 	"github.com/vllry/gameapi/pkg/game/identifier"
 
 	"github.com/stretchr/testify/assert"
@@ -35,6 +37,7 @@ func newTestGame(rconCommands map[string]string) *Game {
 				Instance: "default",
 			},
 			GameDirectory: "../../../../test/minecraft",
+			BackupManager: backup.NewManager(&backup.FakeStorage{}),
 		},
 		rconConstructor: &fakeRconCreator{
 			commands: rconCommands,
@@ -43,6 +46,17 @@ func newTestGame(rconCommands map[string]string) *Game {
 
 	g := buildGame(config)
 	return g
+}
+
+func TestGame_Backup(t *testing.T) {
+	g := newTestGame(map[string]string{
+		"save-off": "",
+		"save":     "",
+		"save-on":  "",
+	})
+
+	err := g.Backup()
+	assert.NoError(t, err)
 }
 
 func TestGame_ListPlayers(t *testing.T) {
