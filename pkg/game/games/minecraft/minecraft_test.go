@@ -37,7 +37,7 @@ func newTestGame(rconCommands map[string]string) *Game {
 				Instance: "default",
 			},
 			GameDirectory: "../../../../test/minecraft",
-			BackupManager: backup.NewManager(&backup.FakeStorage{}),
+			BackupManager: backup.NewTestManager(),
 		},
 		rconConstructor: &fakeRconCreator{
 			commands: rconCommands,

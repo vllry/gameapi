@@ -1,18 +1,21 @@
 package backup
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"time"
+
+	"github.com/pkg/errors"
 
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
 )
 
-// Storage is an object store provider interface.
+const googleCloudBucket = "nebtown-game-backups"
+
+// Storage is an object store interface.
 type Storage interface {
-	Upload(context.Context, bytes.Buffer, string) error
+	upload(context.Context, io.Reader, string) error
 }
 
 type GoogleCloudStorage struct {
@@ -28,8 +31,9 @@ func NewGoogleCloudStorage(credentialPath string) *GoogleCloudStorage {
 	}
 }
 
-// Upload uploads the contents of the provided buffer to a named Google Cloud Storage file.
-func (gc *GoogleCloudStorage) Upload(ctx context.Context, buf bytes.Buffer, fileName string) error {
+// upload uploads the contents of the provided buffer to a named Google Cloud Storage file.
+// https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-go
+func (gc *GoogleCloudStorage) upload(ctx context.Context, reader io.Reader, objectName string) error {
 	var client *storage.Client // TODO consider reusing this?
 	var clientCreateErr error
 	if len(gc.credentialFilePath) == 0 {
@@ -39,21 +43,14 @@ func (gc *GoogleCloudStorage) Upload(ctx context.Context, buf bytes.Buffer, file
 	}
 
 	if clientCreateErr != nil {
-		return clientCreateErr
+		return errors.Wrap(clientCreateErr, "couldn't create storage client")
 	}
 
-	return gc.uploadToStorage(ctx, client, fileName, buf)
-}
-
-// uploadToStorage uploads the contents of the buffer.
-// https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-go
-func (gc *GoogleCloudStorage) uploadToStorage(ctx context.Context, client *storage.Client, objectName string, buffer bytes.Buffer) error {
-	bucket := client.Bucket("nebtown-game-backups")
-
+	bucket := client.Bucket(googleCloudBucket)
 	uploadCtx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 	wc := bucket.Object(objectName).NewWriter(uploadCtx)
-	if _, err := io.Copy(wc, &buffer); err != nil {
+	if _, err := io.Copy(wc, reader); err != nil {
 		return err
 	}
 	if err := wc.Close(); err != nil {

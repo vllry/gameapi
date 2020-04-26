@@ -15,7 +15,7 @@ func main() {
 	flag.StringVar(&gcloudCredentialsPath, "gcloud-credentials-path", "", "Path to Google Cloud credentials file. No path will fall back to the magic SDK behavior.")
 	flag.Parse()
 
-	backupManager := backup.NewManager(backup.NewGoogleCloudStorage(gcloudCredentialsPath))
+	backupManager := backup.NewManager(backup.NewGoogleCloudStorage(gcloudCredentialsPath), "/tmp")
 
 	// TODO take input.
 	g, err := game.NewGame("minecraft", "fake", "test/minecraft", backupManager)

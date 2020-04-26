@@ -11,9 +11,13 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/vllry/gameapi/pkg/backup"
 	"github.com/vllry/gameapi/pkg/game/gameinterface"
 )
+
+// skipBackup is a set of file names to not back up.
+var skipBackup = map[string]struct{}{
+	"backups": {}, // FTB Revelation creates local backups by default. It's overkill to capture those duplicates.
+}
 
 // Game is the state of the Minecraft server manager.
 type Game struct {
@@ -98,11 +102,18 @@ func (g *Game) Backup() error {
 	if err != nil {
 		return errors.Wrap(err, "couldn't save game")
 	}
-	saveFlushTime := backup.NowUtc()
 
 	// Archive directory while saving is off.
 	log.Println("Starting archive...")
-	contents, err := backup.ArchiveDirectory(g.config.base.GameDirectory)
+	backupFiles := make([]string, 0)
+	allFiles, err := ioutil.ReadDir(g.config.base.GameDirectory)
+	for _, file := range allFiles {
+		if _, found := skipBackup[file.Name()]; !found {
+			backupFiles = append(backupFiles, file.Name())
+		}
+	}
+
+	backup, err := g.config.base.BackupManager.ArchiveDirectory(g.config.base.GameDirectory, backupFiles, g.config.base.Identifier)
 	if err != nil {
 		return errors.Wrap(err, "failed to archive game directory")
 	}
@@ -114,9 +125,9 @@ func (g *Game) Backup() error {
 		return errors.Wrap(err, "failed to re-enable saving") // TODO don't bail out here. May as well upload.
 	}
 
-	// Upload archive.
+	// upload archive.
 	log.Println("Uploading...")
-	err = g.config.base.BackupManager.Upload(context.Background(), contents, saveFlushTime, g.config.base.Identifier)
+	err = backup.Upload(context.Background())
 	return err
 }
 
