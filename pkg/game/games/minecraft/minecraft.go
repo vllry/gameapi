@@ -1,7 +1,7 @@
 package minecraft
 
 import (
-	"errors"
+	"context"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,13 +9,22 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/vllry/gameapi/pkg/game/gameinterface"
 )
 
+// skipBackup is a set of file names to not back up.
+var skipBackup = map[string]struct{}{
+	"backups": {}, // FTB Revelation creates local backups by default. It's overkill to capture those duplicates.
+}
+
+// Game is the state of the Minecraft server manager.
 type Game struct {
 	config Config
 }
 
+// Config is Minecraft-specific configuration.
 type Config struct {
 	base            gameinterface.Config
 	rconPort        int
@@ -46,7 +55,7 @@ func NewGame(baseConfig gameinterface.Config) (gameinterface.GenericGame, error)
 				return nil, err
 			}
 		} else if strings.HasPrefix(line, "rcon.password=") {
-			rconPassword = strings.TrimLeft(line, "rcon.password=")
+			rconPassword = strings.TrimPrefix(line, "rcon.password=")
 		}
 	}
 	if rconPort == 0 || len(rconPassword) == 0 {
@@ -70,6 +79,56 @@ func buildGame(config Config) *Game {
 	return &Game{
 		config: config,
 	}
+}
+
+// Backup backs up the game.
+// Only 1 copy of a game instance (distinct game + name pair) should be active at a time.
+func (g *Game) Backup() error {
+	rcon, err := g.config.rconConstructor.new()
+	if err != nil {
+		return errors.Wrap(err, "couldn't create rcon client")
+	}
+	defer rcon.close()
+	defer rcon.run("save-on") // Always re-enable autosaving on exit.
+
+	// Disable autosaving.
+	_, err = rcon.run("save-off")
+	if err != nil {
+		return errors.Wrap(err, "couldn't disable auosaving")
+	}
+
+	// Manually flush save to disk.
+	_, err = rcon.run("save")
+	if err != nil {
+		return errors.Wrap(err, "couldn't save game")
+	}
+
+	// Archive directory while saving is off.
+	log.Println("Starting archive...")
+	backupFiles := make([]string, 0)
+	allFiles, err := ioutil.ReadDir(g.config.base.GameDirectory)
+	for _, file := range allFiles {
+		if _, found := skipBackup[file.Name()]; !found {
+			backupFiles = append(backupFiles, file.Name())
+		}
+	}
+
+	backup, err := g.config.base.BackupManager.ArchiveDirectory(g.config.base.GameDirectory, backupFiles, g.config.base.Identifier)
+	if err != nil {
+		return errors.Wrap(err, "failed to archive game directory")
+	}
+
+	// Re-enable saving, we're done disk IO.
+	log.Println("Archiving done, re-enabling saving...")
+	_, err = rcon.run("save-on")
+	if err != nil {
+		return errors.Wrap(err, "failed to re-enable saving") // TODO don't bail out here. May as well upload.
+	}
+
+	// upload archive.
+	log.Println("Uploading...")
+	err = backup.Upload(context.Background())
+	return err
 }
 
 func (g *Game) GetLogs() (string, error) {

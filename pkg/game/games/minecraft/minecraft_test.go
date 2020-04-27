@@ -3,6 +3,10 @@ package minecraft
 import (
 	"testing"
 
+	"github.com/vllry/gameapi/pkg/backup"
+
+	"github.com/vllry/gameapi/pkg/game/identifier"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/vllry/gameapi/pkg/game/gameinterface"
@@ -10,7 +14,10 @@ import (
 
 func TestNewGame(t *testing.T) {
 	baseConfig := gameinterface.Config{
-		InstanceName:  "default",
+		Identifier: identifier.GameIdentifier{
+			Game:     "minecraft",
+			Instance: "default",
+		},
 		GameDirectory: "../../../../test/minecraft",
 	}
 
@@ -25,8 +32,12 @@ func TestNewGame(t *testing.T) {
 func newTestGame(rconCommands map[string]string) *Game {
 	config := Config{
 		base: gameinterface.Config{
-			InstanceName:  "default",
+			Identifier: identifier.GameIdentifier{
+				Game:     "minecraft",
+				Instance: "default",
+			},
 			GameDirectory: "../../../../test/minecraft",
+			BackupManager: backup.NewTestManager(),
 		},
 		rconConstructor: &fakeRconCreator{
 			commands: rconCommands,
@@ -35,6 +46,17 @@ func newTestGame(rconCommands map[string]string) *Game {
 
 	g := buildGame(config)
 	return g
+}
+
+func TestGame_Backup(t *testing.T) {
+	g := newTestGame(map[string]string{
+		"save-off": "",
+		"save":     "",
+		"save-on":  "",
+	})
+
+	err := g.Backup()
+	assert.NoError(t, err)
 }
 
 func TestGame_ListPlayers(t *testing.T) {

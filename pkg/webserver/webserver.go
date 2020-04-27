@@ -20,6 +20,7 @@ func Start(g gameinterface.GenericGame) {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", Index)
+	router.HandleFunc("/backup", gameWrapper.Backup)
 	router.HandleFunc("/players", gameWrapper.ListPlayers)
 	router.HandleFunc("/logs", gameWrapper.GetLogs)
 
@@ -32,5 +33,6 @@ func Start(g gameinterface.GenericGame) {
 		ReadTimeout:  15 * time.Second,
 	}
 
+	log.Println("Starting webserver...")
 	log.Fatal(srv.ListenAndServe())
 }

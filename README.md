@@ -1,11 +1,15 @@
-The Minecraft GameAPI sits as a daemon/sidecar adjacent to a Minecraft server
-(EG same physical machine, or as a container in the same Kubernetes pod).
+The GameAPI sits as a local facade for a supported game.
 
 The GameAPI provides a standard, programmatic interface for the running game instance.
+The objective of the GameAPI is to abstract RCON and filesystem operations into a safer (and easy to consume) API.
+
+# Dependencies
+* 7zr
+* Google Cloud Storage credentials + access.
 
 # Developing
 * Requires "recent" Go with GoModules support.
-* `go get golang.org/x/tools/cmd/goimports`
+* goimpors tool: `go get golang.org/x/tools/cmd/goimports`
 
 ## Test
 `make test`

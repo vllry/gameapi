@@ -4,15 +4,22 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/vllry/gameapi/pkg/game/identifier"
+
+	"github.com/vllry/gameapi/pkg/backup"
 	"github.com/vllry/gameapi/pkg/game/gameinterface"
 	"github.com/vllry/gameapi/pkg/game/games/minecraft"
 )
 
 // NewGame creates a new object that satisfies the GenericGame interface.
 // It returns an error if the game name is not supported.
-func NewGame(gameName string, instanceName string, gameDirectory string) (gameinterface.GenericGame, error) {
+func NewGame(gameName string, instanceName string, gameDirectory string, backupManager *backup.Manager) (gameinterface.GenericGame, error) {
 	config := gameinterface.Config{
-		InstanceName:  instanceName,
+		BackupManager: backupManager,
+		Identifier: identifier.GameIdentifier{
+			Game:     gameName,
+			Instance: instanceName,
+		},
 		GameDirectory: gameDirectory,
 	}
 
